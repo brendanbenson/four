@@ -1,0 +1,19 @@
+doctype
+html
+  head
+    title= "four multiplayer | play connect four multiplayer online"
+    script(src='/socket.io/socket.io.js')
+    script(src='vendor.js')
+    script(src='app.js')
+    link(rel='stylesheet', type='text/css', href='main.css')
+    link(rel='stylesheet', type='text/css', href='open-sans.css')
+    meta(name='viewport', content='width=860, user-scalable=no')
+  body(ng-app='four')
+    .nav-container
+      .nav
+        .pull-right(ng-if='inviteLink') invite link:
+          input.code(value='{{inviteLink}}', onClick='this.select();', style='width: 225px')
+        h1 four multiplayer
+    .main
+      div(ui-view)
+

@@ -1,0 +1,7 @@
+.center-content(ng-controller='InviteCtrl')
+  h1(ui-sref='start') send your friend this link
+  input.code(type='text', value='{{inviteLink}}')
+  h1 or give them this invite code
+  input.code(type='text', value='{{inviteCode}}')
+  p
+    a.button.large(ui-sref='four({roomGuid: inviteCode})') start game

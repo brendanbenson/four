@@ -1,0 +1,24 @@
+{
+  "name": "four",
+  "version": "0.0.0",
+  "authors": [
+    "Brendan Benson <brendanbenson@gmail.com>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "1.2.16",
+    "underscore": "~1.6.0",
+    "jquery": "~2.1.1",
+    "angular-ui-router": "~0.2.10",
+    "fastclick": "~1.0.2",
+    "open-sans-fontface": "~1.0.4"
+  }
+}
