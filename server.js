@@ -18,47 +18,43 @@ app.use(express.static(__dirname + '/build'));
 io.sockets.on('connection', function (socket) {
   socket.on('move', function (data) {
     var room = socket.room;
-    Four.findGame(room, function(game) {
-      if (!game) {
-        return;
-      }
-
-      game.addMove(data.playerGuid, data.columnIndex, function(move) {
-        if(move) {
-          io.sockets.in(socket.room).emit('move', move);
-        }
-      });
+    Four.findGame(room)
+    .then(function (game) {
+      return game.addMove(data.playerGuid, data.columnIndex);
+    })
+    .then(function (move) {
+      io.sockets.in(socket.room).emit('move', move);
     });
   });
 
   socket.on('join', function (data) {
-    var roomGuid = data.room;
-    var playerGuid = data.playerGuid;
+    var roomGuid = data.room,
+    playerGuid = data.playerGuid,
+    game;
 
-    Four.findGame(roomGuid, function(game) {
-      if (!game) {
-        Four.createGame(roomGuid, function(game) {
-          game.joinPlayer(playerGuid, function(success) {
-            if(success) {
-              socket.leave(socket.room);
-              socket.join(roomGuid);
-              socket.room = roomGuid;
+    Four.findGame(roomGuid)
+    .then(function (game) {
+      game.joinPlayer(playerGuid)
+      .then(function () {
+        socket.leave(socket.room);
+        socket.join(roomGuid);
+        socket.room = roomGuid;
 
-              io.sockets.in(roomGuid).emit('update', game.getState());
-            }
-          });
-        });
-      } else {
-        game.joinPlayer(playerGuid, function(success) {
-          if(success) {
-            socket.leave(socket.room);
-            socket.join(roomGuid);
-            socket.room = roomGuid;
+        io.sockets.in(roomGuid).emit('update', game.getState());
+      });
+    }, function () {
+      Four.createGame(roomGuid)
+      .then(function (createdGame) {
+        game = createdGame;
+        return createdGame.joinPlayer(playerGuid)
+      })
+      .then(function () {
+        socket.leave(socket.room);
+        socket.join(roomGuid);
+        socket.room = roomGuid;
 
-            io.sockets.in(roomGuid).emit('update', game.getState());
-          }
-        });
-      }
+        io.sockets.in(roomGuid).emit('update', game.getState());
+      });
     });
   });
 });

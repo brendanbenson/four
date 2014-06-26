@@ -6,8 +6,9 @@
     "ejs": "latest",
     "express": "latest",
     "jade": "latest",
-    "redis": "^0.10.3",
-    "socket.io": "latest"
+    "q": "^1.0.1",
+    "socket.io": "latest",
+    "then-redis": "^0.3.12"
   },
   "author": "Brendan Benson",
   "devDependencies": {
