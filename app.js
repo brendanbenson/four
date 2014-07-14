@@ -6,14 +6,14 @@ var port = 3700;
 var io = require('socket.io').listen(app.listen(port));
 console.log("Listening on port " + port);
 
-app.set('views', __dirname + '/build');
+app.set('views', __dirname + '/public');
 app.engine('html', require('ejs').renderFile);
 
 app.get("/", function (req, res) {
   res.render("index.html");
 });
 
-app.use(express.static(__dirname + '/build'));
+app.use(express.static(__dirname + '/public'));
 
 io.sockets.on('connection', function (socket) {
   socket.on('move', function (data) {

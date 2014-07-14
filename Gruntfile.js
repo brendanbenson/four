@@ -3,7 +3,7 @@ module.exports = function(grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
 
-    clean: ['build'],
+    clean: ['public'],
 
     jade: {
       build: {
@@ -14,7 +14,7 @@ module.exports = function(grunt) {
           expand: true,
           cwd: 'app/partials',
           src: [ '**/*.jade' ],
-          dest: 'build',
+          dest: 'public',
           ext: '.html'
         }]
       }
@@ -32,17 +32,17 @@ module.exports = function(grunt) {
           'bower_components/underscore/underscore.js',
           'bower_components/fastclick/lib/fastclick.js'
         ],
-        dest: 'build/vendor.js'
+        dest: 'public/vendor.js'
       }
     },
 
     copy: {
       build: {
         files: [
-          {expand: true, cwd: 'app/', src: ['**/*.js', '**/*.css'], dest: 'build/'},
-          {expand: true, cwd: 'app/images', src: '**/*', dest: 'build/images'},
-          {src: 'bower_components/open-sans-fontface/open-sans.css', dest: 'build/open-sans.css'},
-          {expand: true, cwd: 'bower_components/open-sans-fontface/fonts', src: '**/*', dest: 'build/fonts'}
+          {expand: true, cwd: 'app/', src: ['**/*.js', '**/*.css'], dest: 'public/'},
+          {expand: true, cwd: 'app/images', src: '**/*', dest: 'public/images'},
+          {src: 'bower_components/open-sans-fontface/open-sans.css', dest: 'public/open-sans.css'},
+          {expand: true, cwd: 'bower_components/open-sans-fontface/fonts', src: '**/*', dest: 'public/fonts'}
         ]
       }
     },
@@ -51,7 +51,7 @@ module.exports = function(grunt) {
       build: {
         options: {
           sassDir: 'app/style',
-          cssDir: 'build'
+          cssDir: 'public'
         }
       }
     },
