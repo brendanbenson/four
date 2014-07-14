@@ -1,14 +1,12 @@
 # Install everything: 
 * npm install
-* bower install
-
-
-# Start the server: 
-* node server.js
 
 # Compile everything
 * grunt
 
+# Start the server: 
+* npm start
+
 # Run tests
-* grunt:test
-* grunt:unit
+* grunt test
+* grunt unit
