@@ -1,24 +1,14 @@
 (function () {
   var Board = require('./board'),
-  Q = require('q'),
-  redis = require('then-redis'),
-  redisClient = redis.createClient(),
-  redisKeyPrefix = 'four:games:';
+  FourRepository = require('./fourRepository'),
+  Q = require('q');
 
-  var games = {};
-
-  var blankGame = {
-    board: [
-      [null, null, null, null, null, null],
-      [null, null, null, null, null, null],
-      [null, null, null, null, null, null],
-      [null, null, null, null, null, null],
-      [null, null, null, null, null, null],
-      [null, null, null, null, null, null],
-      [null, null, null, null, null, null]
-    ],
-    players: {},
-    currentPlayer: '1'
+  var blankGame = function() {
+    return {
+      board: Board.createBlankBoard(),
+      players: {},
+      currentPlayer: '1'
+    }
   };
 
   var Four = function (state, id) {
@@ -29,7 +19,7 @@
   Four.findGame = function (gameId) {
     var deferred = Q.defer();
 
-    redisClient.get(redisKeyPrefix + gameId)
+    FourRepository.get(gameId)
     .then(function (obj) {
       if (obj === null) {
         deferred.reject();
@@ -44,15 +34,12 @@
   Four.createGame = function (gameId) {
     var deferred = Q.defer();
 
-    var stringGame = JSON.stringify(blankGame);
-
-    redisClient.setnx(redisKeyPrefix + gameId, stringGame)
+    FourRepository.saveUnlessExists(gameId, blankGame())
     .then(function (obj) {
       if (obj === 1) {
-        var newGame = JSON.parse(stringGame);
-        deferred.resolve(new Four(newGame, gameId));
+        deferred.resolve(new Four(blankGame(), gameId));
       } else {
-        return redisClient.get(redisKeyPrefix + gameId);
+        return FourRepository.get(gameId);
       }
     })
     .then(function (obj) {
@@ -77,11 +64,15 @@
     } else if (Object.keys(players).length == 0) {
       // First player
       players[playerId] = '1';
-      this.save_().then(deferred.resolve);
+
+      FourRepository.save(this.id, this.state)
+      .then(deferred.resolve);
     } else if (Object.keys(players).length == 1) {
       // Second player
       players[playerId] = '2';
-      this.save_().then(deferred.resolve);
+
+      FourRepository.save(this.id, this.state)
+      .then(deferred.resolve);
     } else {
       // Full game
       deferred.reject();
@@ -90,7 +81,7 @@
     return deferred.promise;
   };
 
-  Four.prototype.addMove = function (playerId, columnIndex, callback) {
+  Four.prototype.addMove = function (playerId, columnIndex) {
     var deferred = Q.defer();
 
     var state = this.getState();
@@ -104,7 +95,7 @@
       board[columnIndex][rowIndex] = player;
       state.currentPlayer = currentPlayer === '1' ? '2' : '1';
       state.winner = Board.determineWinner(board, player, rowIndex, columnIndex);
-      this.save_().
+      FourRepository.save(this.id, this.state).
       then(function () {
         deferred.resolve({
           player: player,
@@ -118,10 +109,6 @@
     }
 
     return deferred.promise;
-  };
-
-  Four.prototype.save_ = function () {
-    return redisClient.set(redisKeyPrefix + this.id, JSON.stringify(this.state));
   };
 
   module.exports = Four;

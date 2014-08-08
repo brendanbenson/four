@@ -1,8 +1,9 @@
-var expect = require('expect.js');
-var Four = require('../../../server/four');
-var Board = require('../../../server/board');
-var sinon = require('sinon');
-var redis = require('then-redis'),
+var expect = require('expect.js'),
+Four = require('../../../server/four'),
+FourRepository = require('../../../server/fourRepository'),
+Board = require('../../../server/board'),
+sinon = require('sinon'),
+redis = require('then-redis'),
 redisClient = redis.createClient();
 
 describe('Four', function () {
@@ -210,7 +211,8 @@ describe('Four', function () {
           [null, null, null, null, null, null]
         ];
 
-        four.save_()
+//        four.save_()
+        FourRepository.save(four.id, four.getState())
         .then(function () {
           return four.joinPlayer('player1')
           .then(function () {
@@ -249,7 +251,7 @@ describe('Four', function () {
       it('forbids moves on a finished game', function (done) {
         four.getState().winner = '1';
 
-        four.save_()
+        FourRepository.save(four.id, four.getState())
         .then(function() {
           return four.joinPlayer('player1');
         })
