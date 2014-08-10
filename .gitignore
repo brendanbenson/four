@@ -1,6 +1,4 @@
 .sass-cache/
-node_modules/
-bower_components/
 public/
 **/.idea/workspace.xml
 **/.idea/tasks.xml
