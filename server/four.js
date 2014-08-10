@@ -1,13 +1,16 @@
 (function () {
   var Board = require('./board'),
   FourRepository = require('./fourRepository'),
+  _ = require('underscore'),
   Q = require('q');
+
+  var maxPlayers = 2;
 
   var blankGame = function() {
     return {
       board: Board.createBlankBoard(),
-      players: {},
-      currentPlayer: '1'
+      players: [],
+      currentPlayer: 0
     }
   };
 
@@ -49,32 +52,21 @@
     return deferred.promise;
   };
 
-  Four.prototype.getState = function () {
-    return this.state;
-  };
-
   Four.prototype.joinPlayer = function (playerId) {
-    var deferred = Q.defer();
+    var deferred = Q.defer(),
+    players = this.state.players;
 
-    var players = this.getState().players;
-
-    if (players[playerId] !== undefined) {
-      // Already joined
+    if (_.findWhere(players, {id: playerId})) {
       deferred.resolve();
-    } else if (Object.keys(players).length == 0) {
-      // First player
-      players[playerId] = '1';
+    } else if (players.length < maxPlayers) {
+      players.push({
+        id: playerId,
+        playerNumber: players.length,
+        gamesWon: 0
+      });
 
-      FourRepository.save(this.id, this.state)
-      .then(deferred.resolve);
-    } else if (Object.keys(players).length == 1) {
-      // Second player
-      players[playerId] = '2';
-
-      FourRepository.save(this.id, this.state)
-      .then(deferred.resolve);
+      FourRepository.save(this.id, this.state).then(deferred.resolve);
     } else {
-      // Full game
       deferred.reject();
     }
 
@@ -82,27 +74,49 @@
   };
 
   Four.prototype.addMove = function (playerId, columnIndex) {
-    var deferred = Q.defer();
+    var deferred = Q.defer(),
+    state = this.state,
+    board = state.board,
+    player = _.findWhere(state.players, {id: playerId}),
+    currentPlayer = state.currentPlayer,
+    winner = state.winner,
+    rowIndex = board[columnIndex].indexOf(null);
 
-    var state = this.getState();
-    var board = state.board;
-    var player = state.players[playerId];
-    var currentPlayer = state.currentPlayer;
-    var winner = state.winner;
-
-    var rowIndex = board[columnIndex].indexOf(null);
-    if (player === currentPlayer && winner === undefined && rowIndex != -1) {
-      board[columnIndex][rowIndex] = player;
-      state.currentPlayer = currentPlayer === '1' ? '2' : '1';
-      state.winner = Board.determineWinner(board, player, rowIndex, columnIndex);
+    if (player.playerNumber == currentPlayer && winner == undefined && rowIndex != -1) {
+      board[columnIndex][rowIndex] = player.playerNumber;
+      state.currentPlayer = currentPlayer == 0 ? 1 : 0;
+      state.winner = Board.determineWinner(board, player.playerNumber, rowIndex, columnIndex);
+      if (state.winner != null) {
+        state.players[state.winner].gamesWon += 1;
+        state.currentPlayer = state.winner == 0 ? 1 : 0;
+      }
       FourRepository.save(this.id, this.state).
       then(function () {
         deferred.resolve({
-          player: player,
+          player: player.playerNumber,
           rowIndex: rowIndex,
           columnIndex: columnIndex,
           winner: state.winner
         });
+      });
+    } else {
+      deferred.reject();
+    }
+
+    return deferred.promise;
+  };
+
+  Four.prototype.createNextGame = function() {
+    var state = this.state,
+    deferred = Q.defer(),
+    game = this;
+
+    if (state.winner != null) {
+      state.winner = null;
+      state.board = Board.createBlankBoard();
+      FourRepository.save(this.id, this.state).
+      then(function() {
+        deferred.resolve(game);
       });
     } else {
       deferred.reject();

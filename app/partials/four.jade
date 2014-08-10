@@ -1,19 +1,21 @@
 div(ng-controller='FourCtrl')
   .board
     .column(ng-repeat='column in board track by $index', ng-click='move($index)')
-      .four-cell(ng-repeat='hole in column.slice().reverse() track by $index', ng-class='{red: hole == "2", black: hole == "1", empty: hole == null}')
+      .four-cell(ng-repeat='hole in column.slice().reverse() track by $index', ng-class='{red: hole == 1, black: hole == 0, empty: hole == null}')
     .clearfix
   .legend.center-content
-    .pull-left.center-content(ng-show='winner === undefined')
+    .pull-left.center-content(ng-show='winner == null')
       h3 your color:
-      .four-cell(ng-class='{red: player == "2", black: player == "1"}')
-    .pull-right.center-content(ng-show='winner === undefined')
+      .four-cell(ng-class='{red: player.playerNumber == 1, black: player.playerNumber == 0}')
+      h3 games won: {{player.gamesWon}}
+    .pull-right.center-content(ng-show='winner == null')
       h3 friend's color:
-      .four-cell(ng-class='{red: player == "1", black: player == "2"}')
-    .centered.center-content(style='width: 135px', ng-show='winner === undefined')
+      .four-cell(ng-class='{red: player.playerNumber == 0, black: player.playerNumber == 1}')
+      h3 games won: {{otherPlayer.gamesWon || 0}}
+    .centered.center-content(style='width: 135px', ng-show='winner == null')
       h3 current move:
-      .four-cell.center(ng-class='{red: currentPlayer == "2", black: currentPlayer == "1"}')
-    .centered.center-content(style='width: 500px', ng-show='winner != undefined')
-      .four-cell.centered(ng-class='{red: winner == "2", black: winner == "1"}') winner!
-      a.button.large(ui-sref='four({roomGuid: null})') play again
+      .four-cell.center(ng-class='{red: currentPlayer == 1, black: currentPlayer == 0}')
+    .centered.center-content(style='width: 500px', ng-show='winner != null')
+      .four-cell.centered(ng-class='{red: winner == 1, black: winner == 0}') winner!
+      a.button.large(ng-click='createNextGame()') play again
     .clearfix

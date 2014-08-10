@@ -27,6 +27,17 @@ io.sockets.on('connection', function (socket) {
     });
   });
 
+  socket.on('nextGame', function () {
+    var room = socket.room;
+    Four.findGame(room)
+    .then(function(game) {
+      return game.createNextGame();
+    })
+    .then(function (game) {
+      io.sockets.in(socket.room).emit('update', game.state);
+    });
+  });
+
   socket.on('join', function (data) {
     var roomGuid = data.room,
     playerGuid = data.playerGuid,
@@ -40,7 +51,7 @@ io.sockets.on('connection', function (socket) {
         socket.join(roomGuid);
         socket.room = roomGuid;
 
-        io.sockets.in(roomGuid).emit('update', game.getState());
+        io.sockets.in(roomGuid).emit('update', game.state);
       });
     }, function () {
       Four.createGame(roomGuid)
@@ -53,7 +64,7 @@ io.sockets.on('connection', function (socket) {
         socket.join(roomGuid);
         socket.room = roomGuid;
 
-        io.sockets.in(roomGuid).emit('update', game.getState());
+        io.sockets.in(roomGuid).emit('update', game.state);
       });
     });
   });

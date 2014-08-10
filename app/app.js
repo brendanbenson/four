@@ -1,24 +1,25 @@
-$(function() {
-  FastClick.attach(document.body);
-});
-
-var createGuid = function () {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
+(function() {
+  $(function () {
+    FastClick.attach(document.body);
   });
-};
 
-if (!localStorage.getItem('playerGuid')) {
-  localStorage.setItem('playerGuid', createGuid());
-}
+  var createGuid = function () {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
 
-var four = angular.module('four', ['ui.router']);
+  if (!localStorage.getItem('playerGuid')) {
+    localStorage.setItem('playerGuid', createGuid());
+  }
 
-four.config(function ($stateProvider, $urlRouterProvider) {
-  $urlRouterProvider.otherwise("/four");
+  var four = angular.module('four', ['ui.router']);
 
-  $stateProvider
+  four.config(function ($stateProvider, $urlRouterProvider) {
+    $urlRouterProvider.otherwise("/four");
+
+    $stateProvider
     .state('start', {
       url: "/start",
       templateUrl: "start.html"
@@ -39,90 +40,98 @@ four.config(function ($stateProvider, $urlRouterProvider) {
       url: "/four",
       templateUrl: "four.html"
     })
-});
+  });
 
-four.controller('FourCtrl', ['$scope', '$rootScope', '$location', '$state', '$stateParams', 'IdService', 'SocketService',
-  function ($scope, $rootScope, $location, $state, $stateParams, IdService, SocketService) {
-    if(!$stateParams.roomGuid) {
-      $state.go('four', {roomGuid: IdService.generateRoomId()});
-    } else {
-      $rootScope.inviteLink = $location.absUrl();
+  four.controller('FourCtrl', ['$scope', '$rootScope', '$location', '$state', '$stateParams', 'IdService', 'SocketService',
+    function ($scope, $rootScope, $location, $state, $stateParams, IdService, SocketService) {
+      if (!$stateParams.roomGuid) {
+        $state.go('four', {roomGuid: IdService.generateRoomId()});
+      } else {
+        $rootScope.inviteLink = $location.absUrl();
+      }
+
+      SocketService.emit('join', {room: $stateParams.roomGuid});
+
+      $scope.move = function (columnIndex) {
+        SocketService.emit('move', {columnIndex: columnIndex});
+      };
+
+      $scope.createNextGame = function() {
+        SocketService.emit('nextGame');
+      };
+
+      SocketService.on('update', function (state) {
+        var playerGuid = IdService.getPlayerGuid();
+        $scope.board = state.board;
+        $scope.currentPlayer = state.currentPlayer;
+        $scope.player = _.findWhere(state.players, {id: playerGuid});
+        $scope.otherPlayer = _.find(state.players, function(player){ return player.id != playerGuid; });
+        $scope.winner = state.winner;
+        $scope.$apply();
+      });
+
+      SocketService.on('move', function (move) {
+        $scope.board[move.columnIndex][move.rowIndex] = move.player;
+        $scope.currentPlayer = $scope.currentPlayer == 0 ? 1 : 0;
+        $scope.winner = move.winner;
+        $scope.$apply();
+      });
     }
+  ]);
 
-    SocketService.emit('join', {room: $stateParams.roomGuid});
+  four.controller('InviteCtrl', ['$scope', '$location', 'IdService',
+    function ($scope, $location, IdService) {
+      $scope.inviteCode = IdService.generateRoomId();
+      $scope.inviteLink = $location.absUrl().replace('invite', 'four/') + $scope.inviteCode;
+    }
+  ]);
 
-    $scope.move = function (columnIndex) {
-      SocketService.emit('move', {columnIndex: columnIndex});
+  four.factory('IdService', [function () {
+    var createGuid = function () {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
     };
 
-    SocketService.on('update', function (data) {
-      $scope.board = data.board;
-      $scope.currentPlayer = data.currentPlayer;
-      $scope.player = data.players[IdService.getPlayerGuid()];
-      $scope.winner = data.winner;
-      $scope.$apply();
-    });
+    var generateRoomId = function () {
+      return (Math.random() + 1).toString(36).substring(2, 7);
+    };
 
-    SocketService.on('move', function(data) {
-      $scope.board[data.columnIndex][data.rowIndex] = data.player;
-      $scope.currentPlayer = $scope.currentPlayer === '1' ? '2' : '1';
-      $scope.winner = data.winner;
-      $scope.$apply();
-    });
-  }
-]);
+    var findOrCreateGuid = function () {
+      if (!localStorage.getItem('playerGuid')) {
+        localStorage.setItem('playerGuid', createGuid());
+      }
+      return localStorage.getItem('playerGuid');
+    };
 
-four.controller('InviteCtrl', ['$scope', '$location', 'IdService',
-  function ($scope, $location, IdService) {
-    $scope.inviteCode = IdService.generateRoomId();
-    $scope.inviteLink = $location.absUrl().replace('invite', 'four/') + $scope.inviteCode;
-  }
-]);
+    return {
+      getPlayerGuid: function () {
+        return findOrCreateGuid();
+      },
+      generateRoomId: function () {
+        return generateRoomId();
+      }
+    };
+  }]);
 
-four.factory('IdService', [function() {
-  var createGuid = function () {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  };
+  four.factory('SocketService', ['IdService', function (IdService) {
+    var socket, getSocket = function () {
+      if (!socket) {
+        socket = io();
+      }
+      return socket;
+    };
 
-  var generateRoomId = function () {
-    return (Math.random() + 1).toString(36).substring(2,7);
-  };
-
-  var findOrCreateGuid = function() {
-    if (!localStorage.getItem('playerGuid')) {
-      localStorage.setItem('playerGuid', createGuid());
-    }
-    return localStorage.getItem('playerGuid');
-  };
-
-  return {
-    getPlayerGuid: function() {
-      return findOrCreateGuid();
-    },
-    generateRoomId: function() {
-      return generateRoomId();
-    }
-  };
-}]);
-
-four.factory('SocketService', ['IdService', function(IdService) {
-  var socket, getSocket = function() {
-    if(!socket) {
-      socket = io();
-    }
-    return socket;
-  };
-
-  return {
-    emit: function(command, data) {
-      data.playerGuid = IdService.getPlayerGuid();
-      getSocket().emit(command, data);
-    },
-    on: function(command, callback) {
-      getSocket().on(command, callback);
-    }
-  };
-}]);
+    return {
+      emit: function (command, data) {
+        data = data || {};
+        data.playerGuid = IdService.getPlayerGuid();
+        getSocket().emit(command, data);
+      },
+      on: function (command, callback) {
+        getSocket().on(command, callback);
+      }
+    };
+  }]);
+})();
