@@ -33,6 +33,9 @@
   },
   "scripts": {
     "start": "node app.js",
-    "postinstall": "bower install"
+    "postinstall": "bower install && grunt"
+  },
+  "engines": {
+    "node": "0.10.x"
   }
 }
