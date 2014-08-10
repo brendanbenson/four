@@ -29,8 +29,7 @@
     "socket.io-client": "^1.0.4"
   },
   "scripts": {
-    "start": "node app.js",
-    "postinstall": "grunt"
+    "start": "node app.js"
   },
   "engines": {
     "node": "0.10.x"
