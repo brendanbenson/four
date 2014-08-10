@@ -30,7 +30,7 @@
   },
   "scripts": {
     "start": "node app.js",
-    "postinstall": "bower cache clean && bower install && grunt"
+    "postinstall": "grunt"
   },
   "engines": {
     "node": "0.10.x"
