@@ -8,7 +8,8 @@
     "jade": "latest",
     "q": "^1.0.1",
     "socket.io": "latest",
-    "then-redis": "^0.3.12"
+    "then-redis": "^0.3.12",
+    "underscore": "^1.6.0"
   },
   "author": "Brendan Benson",
   "devDependencies": {
