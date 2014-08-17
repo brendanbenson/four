@@ -60,6 +60,10 @@
         SocketService.emit('nextGame');
       };
 
+      $scope.hideModal = function() {
+        $scope.modalHidden = true;
+      };
+
       SocketService.on('update', function (state) {
         var playerGuid = IdService.getPlayerGuid();
         $scope.board = state.board;

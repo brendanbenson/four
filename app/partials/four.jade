@@ -1,4 +1,11 @@
 div(ng-controller='FourCtrl')
+  div(ng-hide='otherPlayer || modalHidden')
+    .modal
+      h1 share this link with a friend:
+      input.code(value='{{inviteLink}}', onClick='this.select();', style='width: 75%; text-align: center;')
+      .clearfix
+      a.button.small(ng-click='hideModal()') done
+    .cover
   .board
     .column(ng-repeat='column in board track by $index', ng-click='move($index)')
       .four-cell(ng-repeat='hole in column.slice().reverse() track by $index', ng-class='{red: hole == 1, black: hole == 0, empty: hole == null}')
@@ -15,6 +22,7 @@ div(ng-controller='FourCtrl')
     .centered.center-content(style='width: 135px', ng-show='winner == null')
       h3 current move:
       .four-cell.center(ng-class='{red: currentPlayer == 1, black: currentPlayer == 0}')
+        span(ng-if='currentPlayer == player.playerNumber') your turn!
     .centered.center-content(style='width: 500px', ng-show='winner != null')
       .four-cell.centered(ng-class='{red: winner == 1, black: winner == 0}') winner!
       a.button.large(ng-click='createNextGame()') play again
