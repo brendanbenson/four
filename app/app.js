@@ -1,18 +1,7 @@
-(function() {
+(function () {
   $(function () {
     FastClick.attach(document.body);
   });
-
-  var createGuid = function () {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  };
-
-  if (!localStorage.getItem('playerGuid')) {
-    localStorage.setItem('playerGuid', createGuid());
-  }
 
   var four = angular.module('four', ['ui.router']);
 
@@ -56,11 +45,11 @@
         SocketService.emit('move', {columnIndex: columnIndex});
       };
 
-      $scope.createNextGame = function() {
+      $scope.createNextGame = function () {
         SocketService.emit('nextGame');
       };
 
-      $scope.hideModal = function() {
+      $scope.hideModal = function () {
         $scope.modalHidden = true;
       };
 
@@ -69,7 +58,9 @@
         $scope.board = state.board;
         $scope.currentPlayer = state.currentPlayer;
         $scope.player = _.findWhere(state.players, {id: playerGuid});
-        $scope.otherPlayer = _.find(state.players, function(player){ return player.id != playerGuid; });
+        $scope.otherPlayer = _.find(state.players, function (player) {
+          return player.id != playerGuid;
+        });
         $scope.winner = state.winner;
         $scope.$apply();
       });
@@ -104,7 +95,12 @@
 
     var findOrCreateGuid = function () {
       if (!localStorage.getItem('playerGuid')) {
-        localStorage.setItem('playerGuid', createGuid());
+        try {
+          localStorage.setItem('playerGuid', createGuid());
+        }
+        catch (err) {
+          alert('Please disable private browsing. (Error: ' + err.message + ')');
+        }
       }
       return localStorage.getItem('playerGuid');
     };
